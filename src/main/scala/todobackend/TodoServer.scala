@@ -3,9 +3,10 @@ package todobackend
 import java.util.UUID
 
 import cats.effect.IO
+import doobie.Transactor
 import org.http4s.HttpRoutes
 
-class TodoServer
+class TodoServer(xa: Transactor[IO])
   extends endpoints4s.http4s.server.Endpoints[IO]
     with TodoEndpoints
     with endpoints4s.http4s.server.JsonEntitiesFromSchemas { parent =>

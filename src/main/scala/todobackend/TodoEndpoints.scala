@@ -13,8 +13,10 @@ trait TodoEndpoints
 
   val getTodos = endpoint(
     request = get(basePath),
-    response = todosResponse,
-    docs = baseDocs.withSummary(Some("Lists all Todos")).withDescription(Some("Blah"))
+    response = ok(jsonResponse[Seq[Todo]], docs = Some("The full list of todos")),
+    docs = baseDocs
+      .withSummary(Some("Lists all Todos"))
+      .withDescription(Some("The returned Todos are ordered by 'order' and then 'title'"))
   )
 
   val postTodo = endpoint(
@@ -29,10 +31,7 @@ trait TodoEndpoints
     docs = baseDocs.withSummary(Some("Deletes all Todos"))
   )
 
-  lazy val todosResponse =
-    ok(jsonResponse[Seq[Todo]], docs = Some("The full list of todos"))
-
-  lazy val titleJsonField: Record[String] = field[String]("title", Some("Description of what to do"))
+  // lazy val titleJsonField: Record[String] = field[String]("title", Some("Description of what to do"))
 
   implicit lazy val todoJsonSchema: JsonSchema[Todo] = genericJsonSchema
   implicit lazy val newTodoJsonSchema: JsonSchema[NewTodo] = genericJsonSchema

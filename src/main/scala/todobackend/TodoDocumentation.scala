@@ -1,6 +1,5 @@
 package todobackend
 
-import cats.effect.IO
 import endpoints4s.openapi.model.{Info, OpenApi}
 
 object TodoDocumentation
@@ -11,7 +10,7 @@ object TodoDocumentation
   val api: OpenApi =
     openApi(
       Info(title = "Todo-Backend API", version = "1.0.0")
-    )(getTodos, postTodo)
+    )(getTodos, postTodo, deleteTodos)
 
   val apiJson: String = OpenApi.stringEncoder.encode(api)
 
