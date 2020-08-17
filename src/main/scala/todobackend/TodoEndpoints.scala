@@ -1,14 +1,12 @@
 package todobackend
 
-import java.util.UUID
-
 import endpoints4s.algebra.Tag
-
 
 
 trait TodoEndpoints
   extends endpoints4s.algebra.Endpoints
-    with endpoints4s.algebra.JsonEntitiesFromSchemas {
+    with endpoints4s.algebra.JsonEntitiesFromSchemas
+    with endpoints4s.generic.JsonSchemas {
 
   private val basePath = path / "todos"
   private val baseDocs = EndpointDocs().withTags(List(Tag("Todo")))
@@ -16,16 +14,27 @@ trait TodoEndpoints
   val getTodos = endpoint(
     request = get(basePath),
     response = todosResponse,
-    docs = baseDocs.withSummary(Some("Lists all todos")).withDescription(Some("Blah"))
+    docs = baseDocs.withSummary(Some("Lists all Todos")).withDescription(Some("Blah"))
+  )
+
+  val postTodo = endpoint(
+    request = post(basePath, jsonRequest[NewTodo]),
+    response = response(Created, jsonResponse[Todo]),
+    docs = baseDocs.withSummary(Some("Creates a new, uncompleted Todo"))
+  )
+
+  val deleteTodos = endpoint(
+    request = delete(basePath),
+    response = ok(emptyResponse),
+    docs = baseDocs.withSummary(Some("Deletes all Todos"))
   )
 
   lazy val todosResponse =
-    ok(jsonResponse[Seq[String]], docs = Some("The full list of todos"))
+    ok(jsonResponse[Seq[Todo]], docs = Some("The full list of todos"))
 
-  // implicit lazy val jsonSchemaTodo: JsonSchema[Todo] = genericJsonSchema
-  implicit lazy val jsonSchemaTodo: JsonSchema[Todo] = (
-    field[UUID]("id") zip
-      field[String]("title", Some("Description of what to do"))
-    ).xmap((Todo.apply _).tupled)(Todo.unapply(_).get)
+  lazy val titleJsonField: Record[String] = field[String]("title", Some("Description of what to do"))
+
+  implicit lazy val todoJsonSchema: JsonSchema[Todo] = genericJsonSchema
+  implicit lazy val newTodoJsonSchema: JsonSchema[NewTodo] = genericJsonSchema
 
 }
