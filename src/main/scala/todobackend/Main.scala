@@ -19,31 +19,31 @@ object Main extends IOApp {
 
   private val todoServer = new TodoServer
 
-  private val corsRoutes = HttpRoutes.of[IO] {
-    case OPTIONS -> _ =>
-      Ok()
-  }
   private val todoRoutes = CORS(
     todoServer.routes
   )
   private val webjarRoutes: HttpRoutes[IO] = webjarService(
     Config(Blocker.liftExecutorService(Executors.newFixedThreadPool(4)))
   )
-  private val documentationRoutes = HttpRoutes.of[IO] {
+  private val customRoutes = HttpRoutes.of[IO] {
+    case OPTIONS -> _ =>
+      Ok()
     case GET -> Root =>
       MovedPermanently(Location(uri"/swagger-ui/3.31.1/index.html?url=/openapi.json"))
     case GET -> Root / "openapi.json" =>
       Ok(TodoDocumentation.apiJson, `Content-Type`(MediaType.application.json))
   }
-  private val httpApp = (corsRoutes <+> todoRoutes <+> webjarRoutes <+> documentationRoutes).orNotFound
+  private val httpApp = (todoRoutes <+> webjarRoutes <+> customRoutes).orNotFound
 
   def run(args: List[String]): IO[ExitCode] =
     BlazeServerBuilder[IO](global)
-      .bindHttp(8080, "localhost")
+      .bindHttp(httpPort, "0.0.0.0")
       .withHttpApp(httpApp)
       .serve
       .compile
       .drain
       .as(ExitCode.Success)
+
+  val httpPort: Int = sys.env.get("PORT").map(Integer.parseInt).getOrElse(8080)
 
 }
