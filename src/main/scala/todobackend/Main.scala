@@ -26,7 +26,7 @@ object Main extends IOApp {
   def transactor(connectEC: ExecutionContext, blocker: Blocker): Resource[IO, H2Transactor[IO]] =
     for {
       xa <- H2Transactor.newH2Transactor[IO](
-        "jdbc:h2:mem:todobackend;DB_CLOSE_DELAY=-1",
+        "jdbc:h2:mem:todobackend;DB_CLOSE_DELAY=-1;INIT=RUNSCRIPT FROM 'classpath:init.sql'",
         "sa",
         "",
         connectEC,
