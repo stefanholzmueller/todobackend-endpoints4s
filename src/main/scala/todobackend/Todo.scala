@@ -12,4 +12,6 @@ case class Todo(
                  title: String,
                  completed: Boolean,
                  order: Int
-               )
+               ) {
+  def url: String = "https://todobackend-endpoints4s.herokuapp.com/todos/" + id
+}
