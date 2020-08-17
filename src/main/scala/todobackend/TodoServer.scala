@@ -3,7 +3,7 @@ package todobackend
 import java.util.UUID
 
 import cats.effect.IO
-import doobie.{ConnectionIO, Transactor}
+import doobie.{ConnectionIO, LogHandler, Transactor}
 import doobie.implicits._
 import doobie.h2.implicits._
 import org.http4s.HttpRoutes
@@ -21,8 +21,10 @@ class TodoServer(xa: Transactor[IO])
     )
   )
 
+  // implicit val logHandler = LogHandler.jdkLogHandler
+
   private def loadTodos: IO[List[Todo]] = {
-    sql"SELECT id, title, completed, order FROM todo"
+    sql"SELECT id, title, completed, order_ FROM todo"
       .query[Todo]
       .to[List]
       .transact(xa)
@@ -43,7 +45,7 @@ class TodoServer(xa: Transactor[IO])
     val title = todo.title
     val completed = todo.completed
     val order = todo.order
-    sql"INSERT INTO todo (id, title, completed, order) values ($id, $title, $completed, $order)"
+    sql"INSERT INTO todo (id, title, completed, order_) values ($id, $title, $completed, $order)"
       .update
       .run
       .map(_ => todo)
