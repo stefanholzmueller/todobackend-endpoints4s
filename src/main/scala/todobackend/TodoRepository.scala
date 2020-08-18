@@ -5,27 +5,27 @@ import java.util.UUID
 import cats.effect.IO
 import doobie.implicits._
 import doobie.quill.DoobieContext
-import doobie.{LogHandler, Transactor}
+import doobie.{ConnectionIO, LogHandler, Transactor}
 import io.getquill.{idiom => _, _}
 import doobie.h2.implicits._ // needed for SQL parameters
 
 trait TodoRepository {
   def selectTodos: IO[Seq[Todo]]
-  def selectTodo(id: UUID): IO[Todo]
   def deleteTodos: IO[Unit]
   def insertTodo(todo: Todo): IO[Todo]
+  def selectTodo(id: UUID): ConnectionIO[Todo]
   def deleteTodo(id: UUID): IO[Unit]
+  def changeTitle(id: UUID, title: String): ConnectionIO[Unit]
 }
 
 class DoobieTodoRepository(xa: Transactor[IO]) extends TodoRepository {
 
   implicit val logHandler: LogHandler = LogHandler.jdkLogHandler
 
-  override def selectTodo(id: UUID): IO[Todo] = {
+  override def selectTodo(id: UUID): ConnectionIO[Todo] = {
     sql"""SELECT "id", "title", "completed", "order" FROM "Todo" WHERE "id" = $id"""
       .query[Todo]
       .unique
-      .transact(xa)
   }
 
   override def selectTodos: IO[Seq[Todo]] = {
@@ -45,7 +45,13 @@ class DoobieTodoRepository(xa: Transactor[IO]) extends TodoRepository {
       .run
       .transact(xa)
       .map(_ => todo)
+  }
 
+  override def changeTitle(id: UUID, title: String): ConnectionIO[Unit] = {
+    sql"""UPDATE "Todo" SET "title" = $title WHERE "id" = $id"""
+      .update
+      .run
+      .map(_ => {})
   }
 
   override def deleteTodos: IO[Unit] =
@@ -76,11 +82,8 @@ class QuillTodoRepository(xa: Transactor[IO]) extends TodoRepository {
     run(q).transact(xa)
   }
 
-  override def selectTodo(id: UUID): IO[Todo] = {
-    val q = quote {
-      query[Todo].filter(_.id == lift(id))
-    }
-    run(q).map(_.head).transact(xa)
+  override def selectTodo(id: UUID): ConnectionIO[Todo] = {
+    run(query[Todo].filter(_.id == lift(id))).map(_.head)
   }
 
   override def deleteTodos: IO[Unit] = {
@@ -102,6 +105,10 @@ class QuillTodoRepository(xa: Transactor[IO]) extends TodoRepository {
       query[Todo].insert(lift(todo))
     }
     run(q).transact(xa).map(_ => todo)
+  }
+
+  override def changeTitle(id: UUID, title: String): ConnectionIO[Unit] = {
+    run(query[Todo].filter(_.id == lift(id)).update(_.title -> lift(title))).map(_ => {})
   }
 
 }
