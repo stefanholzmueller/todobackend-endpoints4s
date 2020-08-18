@@ -17,14 +17,22 @@ class TodoServer(xa: Transactor[IO])
     routesFromEndpoints(
       getTodos.implementedByEffect(_ => loadTodos),
       postTodo.implementedByEffect(createTodo),
-      deleteTodos.implementedByEffect(_ => clearTodos)
+      deleteTodos.implementedByEffect(_ => clearTodos),
+      getTodo.implementedByEffect(loadTodo)
     )
   )
 
   // implicit val logHandler = LogHandler.jdkLogHandler
 
+  private def loadTodo(id: UUID): IO[Todo] = {
+    sql"""SELECT id, title, completed, "order" FROM todo WHERE id = $id"""
+      .query[Todo]
+      .unique
+      .transact(xa)
+  }
+
   private def loadTodos: IO[List[Todo]] = {
-    sql"""SELECT id, title, completed, "order" FROM todo"""
+    sql"""SELECT id, title, completed, "order" FROM todo ORDER BY "order", title"""
       .query[Todo]
       .to[List]
       .transact(xa)

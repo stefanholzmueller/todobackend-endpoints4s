@@ -32,19 +32,27 @@ trait TodoEndpoints
     docs = baseDocs.withSummary(Some("Deletes all Todos"))
   )
 
+  val getTodo = endpoint(
+    request = get(basePath / segment[UUID]("id")),
+    response = ok(jsonResponse[Todo]),
+    docs = baseDocs.withSummary(Some("Shows a single Todo"))
+  )
+
+  lazy val titleJsonField: Record[String] = field[String]("title", Some("Description of what to do"))
+
   implicit lazy val todoJsonSchema: JsonSchema[Todo] = (
     field[UUID]("id") zip
       titleJsonField zip
       field[Boolean]("completed") zip
       field[Int]("order") zip
       field[String]("url")
-    ).xmap(_ => ???)(todo => (todo.id, todo.title, todo.completed, todo.order, todo.url))
+    ).xmap(notImplemented)(todo => (todo.id, todo.title, todo.completed, todo.order, todo.url))
 
   implicit lazy val newTodoJsonSchema: JsonSchema[NewTodo] = (
     titleJsonField zip
       optField[Int]("order")
-    ).xmap((NewTodo.apply _).tupled)(_ => ???)
+    ).xmap((NewTodo.apply _).tupled)(notImplemented)
 
-  lazy val titleJsonField: Record[String] = field[String]("title", Some("Description of what to do"))
+  private def notImplemented[A, B]: A => B = _ => ???
 
 }

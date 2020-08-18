@@ -10,7 +10,7 @@ object TodoDocumentation
   val api: OpenApi =
     openApi(
       Info(title = "Todo-Backend API", version = "1.0.0")
-    )(getTodos, postTodo, deleteTodos)
+    )(getTodos, postTodo, deleteTodos, getTodo)
 
   val apiJson: String = OpenApi.stringEncoder.encode(api)
 
