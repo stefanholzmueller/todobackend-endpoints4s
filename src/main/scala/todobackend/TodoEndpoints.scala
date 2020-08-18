@@ -15,7 +15,7 @@ trait TodoEndpoints
 
   val getTodos = endpoint(
     request = get(basePath),
-    response = ok(jsonResponse[Seq[Todo]], docs = Some("The full list of todos")),
+    response = ok(jsonResponse[List[Todo]], docs = Some("The full list of todos")),
     docs = baseDocs
       .withSummary(Some("Lists all Todos"))
       .withDescription(Some("The returned Todos are ordered by 'order' and then 'title'"))
