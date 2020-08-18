@@ -7,7 +7,7 @@ import doobie.implicits._
 import doobie.quill.DoobieContext
 import doobie.{LogHandler, Transactor}
 import io.getquill.{idiom => _, _}
-import doobie.h2.implicits._
+import doobie.h2.implicits._ // needed for SQL parameters
 
 trait TodoRespository {
   def selectTodos: IO[Seq[Todo]]

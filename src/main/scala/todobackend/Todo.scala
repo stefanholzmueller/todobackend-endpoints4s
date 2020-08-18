@@ -15,3 +15,9 @@ case class Todo(
                ) {
   def url: String = "https://todobackend-endpoints4s.herokuapp.com/todos/" + id
 }
+
+case class EditTodo(
+                     title: Option[String],
+                     completed: Option[Boolean],
+                     order: Option[Int]
+                   )

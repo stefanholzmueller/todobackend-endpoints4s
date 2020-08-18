@@ -18,7 +18,8 @@ class TodoServer(repository: TodoRespository)
       postTodo.implementedByEffect(createTodo),
       deleteTodos.implementedByEffect(_ => repository.deleteTodos),
       getTodo.implementedByEffect(repository.selectTodo),
-      deleteTodo.implementedByEffect(repository.deleteTodo)
+      deleteTodo.implementedByEffect(repository.deleteTodo),
+      patchTodo.implementedByEffect((changeTodo _).tupled)
     )
   )
 
@@ -30,6 +31,10 @@ class TodoServer(repository: TodoRespository)
       order = newTodo.order.getOrElse(0)
     )
     repository.insertTodo(todo)
+  }
+
+  private def changeTodo(id: UUID, editTodo: EditTodo): IO[Todo] = {
+    ???
   }
 
 }

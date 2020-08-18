@@ -45,6 +45,12 @@ trait TodoEndpoints
     docs = baseDocs.withSummary(Some("Deletes this Todo"))
   )
 
+  val patchTodo = endpoint(
+    request = patch(deepPath, jsonRequest[EditTodo]),
+    response = ok(jsonResponse[Todo]),
+    docs = baseDocs.withSummary(Some("Modifies this Todo"))
+  )
+
   lazy val titleJsonField: Record[String] = field[String]("title", Some("Description of what to do"))
 
   implicit lazy val todoJsonSchema: JsonSchema[Todo] = (
@@ -59,6 +65,12 @@ trait TodoEndpoints
     titleJsonField zip
       optField[Int]("order")
     ).xmap((NewTodo.apply _).tupled)(notImplemented)
+
+  implicit lazy val editTodoJsonSchema: JsonSchema[EditTodo] = (
+      optField[String]("title") zip
+      optField[Boolean]("completed") zip
+      optField[Int]("order")
+    ).xmap((EditTodo.apply _).tupled)(notImplemented)
 
   private def notImplemented[A, B]: A => B = _ => ???
 
