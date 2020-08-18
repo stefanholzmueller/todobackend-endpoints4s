@@ -9,7 +9,7 @@ import doobie.{LogHandler, Transactor}
 import io.getquill.{idiom => _, _}
 import doobie.h2.implicits._ // needed for SQL parameters
 
-trait TodoRespository {
+trait TodoRepository {
   def selectTodos: IO[Seq[Todo]]
   def selectTodo(id: UUID): IO[Todo]
   def deleteTodos: IO[Unit]
@@ -17,19 +17,19 @@ trait TodoRespository {
   def deleteTodo(id: UUID): IO[Unit]
 }
 
-class DoobieTodoRepository(xa: Transactor[IO]) extends TodoRespository {
+class DoobieTodoRepository(xa: Transactor[IO]) extends TodoRepository {
 
-  implicit val logHandler = LogHandler.jdkLogHandler
+  implicit val logHandler: LogHandler = LogHandler.jdkLogHandler
 
   override def selectTodo(id: UUID): IO[Todo] = {
-    sql"""SELECT id, title, completed, "order" FROM todo WHERE id = $id"""
+    sql"""SELECT "id", "title", "completed", "order" FROM "Todo" WHERE "id" = $id"""
       .query[Todo]
       .unique
       .transact(xa)
   }
 
   override def selectTodos: IO[Seq[Todo]] = {
-    sql"""SELECT id, title, completed, "order" FROM todo ORDER BY "order", title"""
+    sql"""SELECT "id", "title", "completed", "order" FROM "Todo" ORDER BY "order", "title""""
       .query[Todo]
       .to[List]
       .transact(xa)
@@ -40,7 +40,7 @@ class DoobieTodoRepository(xa: Transactor[IO]) extends TodoRespository {
     val title = todo.title
     val completed = todo.completed
     val order = todo.order
-    sql"""INSERT INTO todo (id, title, completed, "order") values ($id, $title, $completed, $order)"""
+    sql"""INSERT INTO "Todo" ("id", "title", "completed", "order") values ($id, $title, $completed, $order)"""
       .update
       .run
       .transact(xa)
@@ -49,14 +49,14 @@ class DoobieTodoRepository(xa: Transactor[IO]) extends TodoRespository {
   }
 
   override def deleteTodos: IO[Unit] =
-    sql"""DELETE FROM todo"""
+    sql"""DELETE FROM "Todo""""
       .update
       .run
       .transact(xa)
       .map(_ => {})
 
   override def deleteTodo(id: UUID): IO[Unit] =
-    sql"""DELETE FROM todo WHERE id = $id"""
+    sql"""DELETE FROM "Todo" WHERE "id" = $id"""
       .update
       .run
       .transact(xa)
@@ -64,9 +64,9 @@ class DoobieTodoRepository(xa: Transactor[IO]) extends TodoRespository {
 
 }
 
-class QuillTodoRepository(xa: Transactor[IO]) extends TodoRespository {
+class QuillTodoRepository(xa: Transactor[IO]) extends TodoRepository {
 
-  val dc = new DoobieContext.H2(Literal)
+  val dc = new DoobieContext.H2(Escape) // Escape because 'order' is a reserved word
   import dc._
 
   override def selectTodos: IO[Seq[Todo]] = {

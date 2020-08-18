@@ -1,6 +1,6 @@
-CREATE TABLE todo (
-  id UUID PRIMARY KEY,
-  title VARCHAR,
-  completed BOOLEAN,
+CREATE TABLE "Todo" (
+  "id" UUID PRIMARY KEY,
+  "title" VARCHAR,
+  "completed" BOOLEAN,
   "order" INT
 );

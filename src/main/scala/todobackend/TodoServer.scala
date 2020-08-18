@@ -7,7 +7,7 @@ import io.getquill.{idiom => _}
 import org.http4s.HttpRoutes
 
 
-class TodoServer(repository: TodoRespository)
+class TodoServer(repository: TodoRepository)
   extends endpoints4s.http4s.server.Endpoints[IO]
     with TodoEndpoints
     with endpoints4s.http4s.server.JsonEntitiesFromSchemas { parent =>
