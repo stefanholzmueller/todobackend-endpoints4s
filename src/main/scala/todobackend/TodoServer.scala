@@ -3,40 +3,24 @@ package todobackend
 import java.util.UUID
 
 import cats.effect.IO
-import doobie.{ConnectionIO, LogHandler, Transactor}
-import doobie.implicits._
-import doobie.h2.implicits._
+import io.getquill.{idiom => _}
 import org.http4s.HttpRoutes
 
-class TodoServer(xa: Transactor[IO])
+
+class TodoServer(repository: TodoRespository)
   extends endpoints4s.http4s.server.Endpoints[IO]
     with TodoEndpoints
     with endpoints4s.http4s.server.JsonEntitiesFromSchemas { parent =>
 
   val routes: HttpRoutes[IO] = HttpRoutes.of(
     routesFromEndpoints(
-      getTodos.implementedByEffect(_ => loadTodos),
+      getTodos.implementedByEffect(_ => repository.selectTodos),
       postTodo.implementedByEffect(createTodo),
-      deleteTodos.implementedByEffect(_ => clearTodos),
-      getTodo.implementedByEffect(loadTodo)
+      deleteTodos.implementedByEffect(_ => repository.deleteTodos),
+      getTodo.implementedByEffect(repository.selectTodo),
+      deleteTodo.implementedByEffect(repository.deleteTodo)
     )
   )
-
-  // implicit val logHandler = LogHandler.jdkLogHandler
-
-  private def loadTodo(id: UUID): IO[Todo] = {
-    sql"""SELECT id, title, completed, "order" FROM todo WHERE id = $id"""
-      .query[Todo]
-      .unique
-      .transact(xa)
-  }
-
-  private def loadTodos: IO[List[Todo]] = {
-    sql"""SELECT id, title, completed, "order" FROM todo ORDER BY "order", title"""
-      .query[Todo]
-      .to[List]
-      .transact(xa)
-  }
 
   private def createTodo(newTodo: NewTodo): IO[Todo] = {
     val todo = Todo(
@@ -45,25 +29,7 @@ class TodoServer(xa: Transactor[IO])
       completed = false,
       order = newTodo.order.getOrElse(0)
     )
-    insertTodo(todo).transact(xa)
+    repository.insertTodo(todo)
   }
-
-  private def insertTodo(todo: Todo): ConnectionIO[Todo] = {
-    val id = todo.id
-    val title = todo.title
-    val completed = todo.completed
-    val order = todo.order
-    sql"""INSERT INTO todo (id, title, completed, "order") values ($id, $title, $completed, $order)"""
-      .update
-      .run
-      .map(_ => todo)
-  }
-
-  private def clearTodos: IO[Unit] =
-    sql"""DELETE FROM todo"""
-      .update
-      .run
-      .transact(xa)
-      .map(_ => {})
 
 }

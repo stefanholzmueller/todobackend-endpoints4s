@@ -10,6 +10,7 @@ trait TodoEndpoints
     with endpoints4s.algebra.JsonEntitiesFromSchemas {
 
   private val basePath = path / "todos"
+  private val deepPath = basePath / segment[UUID]("id")
   private val baseDocs = EndpointDocs().withTags(List(Tag("Todo")))
 
   val getTodos = endpoint(
@@ -33,9 +34,15 @@ trait TodoEndpoints
   )
 
   val getTodo = endpoint(
-    request = get(basePath / segment[UUID]("id")),
+    request = get(deepPath),
     response = ok(jsonResponse[Todo]),
     docs = baseDocs.withSummary(Some("Shows a single Todo"))
+  )
+
+  val deleteTodo = endpoint(
+    request = delete(deepPath),
+    response = ok(emptyResponse),
+    docs = baseDocs.withSummary(Some("Deletes this Todo"))
   )
 
   lazy val titleJsonField: Record[String] = field[String]("title", Some("Description of what to do"))

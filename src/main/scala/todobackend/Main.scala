@@ -64,7 +64,7 @@ object Main extends IOApp {
       connectEC <- ExecutionContexts.fixedThreadPool[IO](32)
       blocker <- Blocker[IO]
       xa <- transactor(connectEC, blocker)
-      server = new TodoServer(xa)
+      server = new TodoServer(new QuillTodoRepository(xa))
       routes = routing(server)
       blaze <- blaze(routes)
     } yield blaze
