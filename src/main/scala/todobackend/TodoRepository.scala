@@ -6,7 +6,7 @@ import doobie.implicits._
 import doobie.quill.DoobieContext
 import doobie.{ConnectionIO, LogHandler}
 import io.getquill.{idiom => _, _}
-import doobie.h2.implicits._ // needed for SQL parameters
+import doobie.postgres.implicits._ // needed for uuid SQL parameters
 
 trait TodoRepository {
   def selectTodos: ConnectionIO[List[Todo]]
@@ -24,12 +24,12 @@ object DoobieTodoRepository extends TodoRepository {
   implicit val logHandler: LogHandler = LogHandler.jdkLogHandler
 
   override def selectTodo(id: UUID): ConnectionIO[Todo] =
-    sql"""SELECT "id", "title", "completed", "order" FROM "Todo" WHERE "id" = $id"""
+    sql"""SELECT id, title, completed, "order" FROM todo WHERE id = $id"""
       .query[Todo]
       .unique
 
   override def selectTodos: ConnectionIO[List[Todo]] =
-    sql"""SELECT "id", "title", "completed", "order" FROM "Todo" ORDER BY "order", "title""""
+    sql"""SELECT id, title, completed, "order" FROM todo ORDER BY "order", title"""
       .query[Todo]
       .to[List]
 
@@ -38,38 +38,38 @@ object DoobieTodoRepository extends TodoRepository {
     val title = todo.title
     val completed = todo.completed
     val order = todo.order
-    sql"""INSERT INTO "Todo" ("id", "title", "completed", "order") values ($id, $title, $completed, $order)"""
+    sql"""INSERT INTO todo (id, title, completed, "order") values ($id, $title, $completed, $order)"""
       .update
       .run
       .map(_ => todo)
   }
 
   override def deleteTodos: ConnectionIO[Unit] =
-    sql"""DELETE FROM "Todo""""
+    sql"""DELETE FROM todo"""
       .update
       .run
       .map(_ => {})
 
   override def deleteTodo(id: UUID): ConnectionIO[Unit] =
-    sql"""DELETE FROM "Todo" WHERE "id" = $id"""
+    sql"""DELETE FROM todo WHERE id = $id"""
       .update
       .run
       .map(_ => {})
 
   override def changeTitle(id: UUID, title: String): ConnectionIO[Unit] =
-    sql"""UPDATE "Todo" SET "title" = $title WHERE "id" = $id"""
+    sql"""UPDATE todo SET title = $title WHERE id = $id"""
       .update
       .run
       .map(_ => {})
 
   override def changeOrder(id: UUID, order: Int): ConnectionIO[Unit] =
-    sql"""UPDATE "Todo" SET "order" = $order WHERE "id" = $id"""
+    sql"""UPDATE todo SET "order" = $order WHERE id = $id"""
       .update
       .run
       .map(_ => {})
 
   override def changeCompleted(id: UUID, completed: Boolean): ConnectionIO[Unit] =
-    sql"""UPDATE "Todo" SET "completed" = $completed WHERE "id" = $id"""
+    sql"""UPDATE todo SET completed = $completed WHERE id = $id"""
       .update
       .run
       .map(_ => {})
@@ -78,7 +78,7 @@ object DoobieTodoRepository extends TodoRepository {
 
 object QuillTodoRepository extends TodoRepository {
 
-  val dc = new DoobieContext.H2(Escape) // Escape because 'order' is a reserved word
+  val dc = new DoobieContext.Postgres(NamingStrategy(SnakeCase, Escape))
   import dc._
 
   override def selectTodos: ConnectionIO[List[Todo]] =

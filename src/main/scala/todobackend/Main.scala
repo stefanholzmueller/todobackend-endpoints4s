@@ -4,7 +4,9 @@ import java.util.concurrent.Executors
 
 import cats.effect.{Blocker, ExitCode, IO, IOApp, Resource}
 import cats.implicits._
-import doobie.h2.H2Transactor
+import com.zaxxer.hikari.HikariConfig
+import doobie.Transactor
+import doobie.hikari.HikariTransactor
 import doobie.util.ExecutionContexts
 import org.http4s.dsl.io._
 import org.http4s.headers._
@@ -22,19 +24,25 @@ import scala.concurrent.ExecutionContext.global
 object Main extends IOApp {
 
   val httpPort: Int = sys.env.get("PORT").map(Integer.parseInt).getOrElse(8080)
-  val jdbcUrl: String = sys.env.getOrElse("JDBC_DATABASE_URL", "jdbc:postgresql://localhost:5432/kram_test?user=postgres&password=pass")
-  println("<<<<<<<<< "  + jdbcUrl)
+  val jdbcUrl: String = sys.env.getOrElse("JDBC_DATABASE_URL", "jdbc:postgresql://localhost:5432/todobackend?user=postgres&password=pass")
+  /*
+    CREATE TABLE todo (
+      id uuid NOT NULL,
+      title varchar NOT NULL,
+      "order" int4 NOT NULL,
+      completed bool NOT NULL,
+      CONSTRAINT todo_pk PRIMARY KEY (id)
+    );
+   */
 
-  def transactor(connectEC: ExecutionContext, blocker: Blocker): Resource[IO, H2Transactor[IO]] =
-    for {
-      xa <- H2Transactor.newH2Transactor[IO](
-        "jdbc:h2:mem:todobackend;DB_CLOSE_DELAY=-1;INIT=RUNSCRIPT FROM 'classpath:init.sql'",
-        "sa",
-        "",
-        connectEC,
-        blocker
-      )
-    } yield xa
+
+  def transactor(connectEC: ExecutionContext, blocker: Blocker): Resource[IO, Transactor[IO]] = {
+    val hikariConfig = new HikariConfig()
+    hikariConfig.setDriverClassName("org.postgresql.Driver")
+    hikariConfig.setJdbcUrl(jdbcUrl)
+
+    HikariTransactor.fromHikariConfig(hikariConfig, connectEC, blocker)
+  }
 
   def routing(todoServer: TodoServer): HttpRoutes[IO] = {
     val todoRoutes: HttpRoutes[IO] = CORS(
