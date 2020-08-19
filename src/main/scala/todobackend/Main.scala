@@ -22,6 +22,8 @@ import scala.concurrent.ExecutionContext.global
 object Main extends IOApp {
 
   val httpPort: Int = sys.env.get("PORT").map(Integer.parseInt).getOrElse(8080)
+  val jdbcUrl: String = sys.env.getOrElse("JDBC_DATABASE_URL", "jdbc:postgresql://localhost:5432/kram_test?user=postgres&password=pass")
+  println("<<<<<<<<< "  + jdbcUrl)
 
   def transactor(connectEC: ExecutionContext, blocker: Blocker): Resource[IO, H2Transactor[IO]] =
     for {

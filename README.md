@@ -7,7 +7,7 @@ This API is hosted on Heroku here: https://todobackend-endpoints4s.herokuapp.com
 
 The automated test spec for Todo-Backend can be run here: https://todobackend.com/specs/index.html?https://todobackend-endpoints4s.herokuapp.com/todos
 
-May be useful as an example setup of **endpoints4s** together with **http4s** and **doobie**.
+May be useful as an example setup of **endpoints4s**  with **http4s** and **doobie**.
 All is held together by **Cats Effect**.
 
 ## Used Scala libraries
