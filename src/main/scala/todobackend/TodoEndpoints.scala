@@ -54,12 +54,16 @@ trait TodoEndpoints
   lazy val titleJsonField: Record[String] = field[String]("title", Some("Description of what to do"))
 
   implicit lazy val todoJsonSchema: JsonSchema[Todo] = (
-    field[UUID]("id") zip
-      titleJsonField zip
+    titleJsonField zip
       field[Boolean]("completed") zip
       field[Int]("order") zip
       field[String]("url")
-    ).xmap(notImplemented)(todo => (todo.id, todo.title, todo.completed, todo.order, todo.url))
+    ).xmap(notImplemented)(todo => (
+    todo.title,
+    todo.completed,
+    todo.order,
+    "https://todobackend-endpoints4s.herokuapp.com/todos/" + todo.id
+  ))
 
   implicit lazy val newTodoJsonSchema: JsonSchema[NewTodo] = (
     titleJsonField zip
@@ -67,7 +71,7 @@ trait TodoEndpoints
     ).xmap((NewTodo.apply _).tupled)(notImplemented)
 
   implicit lazy val editTodoJsonSchema: JsonSchema[EditTodo] = (
-      optField[String]("title") zip
+    optField[String]("title") zip
       optField[Boolean]("completed") zip
       optField[Int]("order")
     ).xmap((EditTodo.apply _).tupled)(notImplemented)
